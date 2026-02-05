@@ -10,12 +10,10 @@ unsigned short *vram = (unsigned short*)0xB8000;
 
 void clear(int rowToClear){
 
-	rowToClear = rowToClear - 1;
-	int idxToClear = 2 * rowToClear * 160; //gives the starting index of the row to be cleared
-
-	for (int i = idxToClear; i < idxToClear + 160; i++){
+	int row = rowToClear - 1;
+	for (int i = 0; i < COLUMNS; i++){
 	
-		vram[i] = ' ';
+		vram[y * COLUMNS + i] = (7 << 8) | ' ';
 
 	}
 
@@ -43,10 +41,9 @@ void putc(int data){
 		int tab = (x + 8) & ~7;
 		while (x < tab) putc(' ');
 	} else {
-		vram[y * COLUMNS + x] = data;
-		vram[(y * COLUMNS + x) + 1] = 7;
+		vram[y * COLUMNS + x] = (7 << 8) | data;
 		x++;
-		if (x > COLUMNS) {
+		if (x >= COLUMNS) {
 			x = 0;
 			y++;
 		}
