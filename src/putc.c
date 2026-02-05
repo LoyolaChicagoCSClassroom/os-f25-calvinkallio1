@@ -10,7 +10,6 @@ unsigned short *vram = (unsigned short*)0xB8000;
 
 void clear(int rowToClear){
 
-	int row = rowToClear - 1;
 	for (int i = 0; i < COLUMNS; i++){
 	
 		vram[y * COLUMNS + i] = (7 << 8) | ' ';
