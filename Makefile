@@ -26,6 +26,7 @@ OBJS = \
 	kernel_main.o \
 	putc.o \
 	interrupt.o \
+	page.o \
 
 # Make sure to keep a blank line here after OBJS list
 
