@@ -64,7 +64,7 @@ run:
 	qemu-system-i386 -hda rootfs.img
 
 debug:
-	./launch_qemu.sh
+	./launch_qemu.sh -monitor stdio
 
 clean:
 	rm -f grub.img kernel rootfs.img obj/*
