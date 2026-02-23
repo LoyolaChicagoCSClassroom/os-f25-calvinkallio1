@@ -27,6 +27,7 @@ OBJS = \
 	putc.o \
 	interrupt.o \
 	page.o \
+	rprintf.o
 
 # Make sure to keep a blank line here after OBJS list
 
