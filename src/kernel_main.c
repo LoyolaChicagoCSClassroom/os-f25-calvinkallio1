@@ -48,7 +48,7 @@ void main(void) {
 		one.prev = 0;
 		one.physical_addr = (void*)0x000B8000;
 		if (!map_pages((void*)0x000B8000, &one, pd)) {
-			esp_printf(putc, "VGA Memory allocation failed\n");
+			putc(0);
 			while(1) {}
 		}
 	}
@@ -63,8 +63,7 @@ void main(void) {
 		one.prev = 0;
 		one.physical_addr = (void*)addr;
 		if (!map_pages((void*)addr, &one, pd)) {
-
-			esp_printf(putc, "Kernel memory allocation failed\n");
+			putc(1);
 			while(1) {}
 	
 		}
@@ -83,7 +82,7 @@ void main(void) {
 		one.physical_addr = (void*)addr;
 		if (!map_pages((void*)addr, &one, pd)){
 
-			esp_printf(putc, "Stack memory allocation failed\n");
+			putc(2);
 			while(1) {}
 
 		}
@@ -93,7 +92,7 @@ void main(void) {
 	load_page_directory(pd);
 	enable_paging();
 
-	esp_printf(putc, "Pages allocated successfully");
+	putc(4);
 
 	while (1){
 

@@ -8,6 +8,12 @@ int x = 0;
 int y = 0;
 unsigned short *vram = (unsigned short*)0xB8000;
 
+void puts(char *str) {
+
+	
+
+}
+
 void clear(int rowToClear){
 
 	for (int i = 0; i < COLUMNS; i++){
