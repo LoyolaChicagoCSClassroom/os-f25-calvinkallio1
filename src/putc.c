@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "putc.h"
 
-#define ROWS 24
+#define ROWS 25
 #define COLUMNS 80
 
 int x = 0;

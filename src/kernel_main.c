@@ -92,16 +92,21 @@ void main(void) {
 	load_page_directory(pd);
 	enable_paging();
 
+	esp_printf(putc, "O.K.\n");
+
 	esp_printf(putc, "Memory successfully allocated\n");
 
 	while (1){
-
+		
 		uint8_t status = inb(0x64);
+		if (status & 0x01) {
 
-		if (status) {
-			uint8_t scancode = inb(0x60);
-			int data = scancode_to_ascii[scancode];
-			putc(data);
+			uint8_t sc = inb(0x60);
+
+			if (sc & 0x80) continue;
+			char ch = scancode_to_ascii[sc];
+			if (ch) putc(ch);
+		
 		}
 
 	}
