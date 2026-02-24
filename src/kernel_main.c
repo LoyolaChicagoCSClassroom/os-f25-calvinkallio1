@@ -32,10 +32,10 @@ static const char scancode_to_ascii[128] = {
 
 void main(void) {	
 
-//	remap_pic();
-//	load_gdt();
-//	init_idt();
-//	asm("sti");
+	remap_pic();
+	load_gdt();
+	init_idt();
+	asm("sti");
 
 	for (int i = 0; i < 1024; i++){
 		((uint32_t*)pd)[i] = 0;
@@ -48,7 +48,7 @@ void main(void) {
 		one.prev = 0;
 		one.physical_addr = (void*)0x000B8000;
 		if (!map_pages((void*)0x000B8000, &one, pd)) {
-			putc(0);
+			esp_printf(putc, "VGA Memory Allocation Failed\n");
 			while(1) {}
 		}
 	}
@@ -63,7 +63,7 @@ void main(void) {
 		one.prev = 0;
 		one.physical_addr = (void*)addr;
 		if (!map_pages((void*)addr, &one, pd)) {
-			putc(1);
+			esp_printf(putc, "Kernel allocation failed\n");
 			while(1) {}
 	
 		}
@@ -82,7 +82,7 @@ void main(void) {
 		one.physical_addr = (void*)addr;
 		if (!map_pages((void*)addr, &one, pd)){
 
-			putc(2);
+			esp_printf(putc, "Stack memory allocation failed\n");
 			while(1) {}
 
 		}
@@ -92,13 +92,13 @@ void main(void) {
 	load_page_directory(pd);
 	enable_paging();
 
-	putc(4);
+	esp_printf(putc, "Memory successfully allocated\n");
 
 	while (1){
 
 		uint8_t status = inb(0x64);
 
-		if (status & 1) {
+		if (status) {
 			uint8_t scancode = inb(0x60);
 			int data = scancode_to_ascii[scancode];
 			putc(data);

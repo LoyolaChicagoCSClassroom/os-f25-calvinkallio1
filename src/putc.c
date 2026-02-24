@@ -8,17 +8,11 @@ int x = 0;
 int y = 0;
 unsigned short *vram = (unsigned short*)0xB8000;
 
-void puts(char *str) {
-
-	
-
-}
-
 void clear(int rowToClear){
 
 	for (int i = 0; i < COLUMNS; i++){
 	
-		vram[y * COLUMNS + i] = (7 << 8) | ' ';
+		vram[rowToClear * COLUMNS + i] = (7 << 8) | ' ';
 
 	}
 
@@ -37,9 +31,11 @@ void scroll(void){
 
 }
 
-void putc(int data){
-	
-	if (data == '\n') {
+int putc(int data){
+
+	if (data == '\r') {
+		x = 0;
+	} else if (data == '\n') {
 		x = 0;
 		y++;
 	} else if (data == '\t') {
@@ -55,17 +51,7 @@ void putc(int data){
 	}
 
 	if (y >= ROWS) scroll();
-
+	
+	return data;
 }
-
-
-
-
-
-
-
-
-
-
-
 

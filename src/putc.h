@@ -3,7 +3,7 @@
 #ifndef PUTC_H
 #define PUTC_H
 
-void putc(int data);
+int putc(int data);
 void clear(int rowToClear);
 void scroll(void);
 
