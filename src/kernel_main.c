@@ -3,6 +3,7 @@
 #include "interrupt.h"
 #include "page.h"
 #include "rprintf.h"
+#include "fat.h"
 
 #define MULTIBOOT2_HEADER_MAGIC         0xe85250d6
 

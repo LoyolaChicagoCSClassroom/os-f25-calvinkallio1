@@ -22,6 +22,11 @@
  *
  */
 
+int fatInit();
+struct root_directory_entry *fatOpen(char *path);
+int fatRead(struct root_directory_entry *rde_ptr, char *buf, int n);
+
+
 struct boot_sector {
     char code[3];
     char oem_name[8];
