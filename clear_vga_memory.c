@@ -15,10 +15,19 @@ static inline int sys_putc(int ch) {
     return ret;
 
 }
-void main(void) {
+__attribute__((noreturn))
+void _start(void) {
 
-    for (int i = 0; i < 80 * 25; i++) sys_putc(' ');
+    volatile uint16_t *vram = (volatile uint16_t*)0xB8000;
 
-    while (1) {}
+    for (int i = 0; i < 80*25; i++){
+
+        vram[i] = (0x07 << 8) | ' ';
+
+    }
+
+    vram[0] = (0x4F << 8) | 'X';
+
+    while(1) {}
 
 }

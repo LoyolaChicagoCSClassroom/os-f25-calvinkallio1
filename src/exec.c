@@ -28,6 +28,10 @@ int load_and_exec_flat(char *name) {
     uint32_t load_va = align_up1((uint32_t)&_end_kernel) + 0x20000u;
     uint32_t stack_va = load_va + 0x40000u;
     uint32_t stack_size = 0x40000u;
+    
+    esp_printf(putc, "load_and_exec_flat(%s)\n", name);
+    esp_printf(putc, "_end_kernel=0x%x load_va=0x%x stack_va=0x%x stack_size=0x%x\n", (uint32_t)&_end_kernel, load_va, stack_va, stack_size);
+
 
     if (stack_va + stack_size >= MAX_PDI0_VA) {
 
@@ -46,7 +50,7 @@ int load_and_exec_flat(char *name) {
     }
 
     uint32_t size = rde->file_size;
-    esp_printf(putc, "size=%u\n", size);
+    esp_printf(putc, "size=%x\n", size);
     if (size == 0) return -2;
 
     uint32_t map_size = align_up1(size);
@@ -74,6 +78,8 @@ int load_and_exec_flat(char *name) {
         return -5;
 
     }
+    
+    esp_printf(putc, "mapped ok\n");
 
     esp_printf(putc, "read...\n");
     int n = fatRead(rde, (char*)load_va, (int)size);
@@ -85,10 +91,15 @@ int load_and_exec_flat(char *name) {
 
     }
 
-    esp_printf(putc, "jumping to 0x%x\n", load_va);
+    uint8_t *p = (uint8_t*)load_va;
+    esp_printf(putc, "First bytes: %x %x %x %x %x %x %x %x", p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
     
-    uint32_t new_esp = stack_va + stack_size - 16;
-
+    volatile uint16_t *vram = (volatile uint16_t*)0xB8000;
+    vram[1] = (uint16_t)((0x2F << 8) | 'K');
+    esp_printf(putc, "wrote K before jump\n");
+    uint32_t new_esp = stack_va + stack_size - 4;
+    esp_printf(putc, "jumping to 0x%x\n with esp=0x%x\n", load_va, new_esp);
+    asm volatile("cli");
     asm volatile(
             "mov %0, %%esp \n"
             "jmp *%1       \n"
@@ -96,6 +107,7 @@ int load_and_exec_flat(char *name) {
             : "r"(new_esp), "r"((entry_fn_t)load_va)
             : "memory"
         );
+    esp_printf(putc, "JUMP FAILED");
 
     return 0;
 
