@@ -77,13 +77,15 @@ run:
 debug:
 	./launch_qemu.sh -monitor stdio
 
-clear_vga_memory: rootfs.img | $(APPDIR)
-	$(CC) -m32 -ffreestanding -fno-pie -fno-stack-protector -nostdlib -I. -c clear_vga_memory.c -o clear_vga_memory.o
-	$(LD) -melf_i386 -T app.ld $(APPDIR)/clear_vga_memory.o -o $(APPDIR)/clear_vga_memory.elf
-	$(OBJCOPY) -O binary --strip-all $(APPDIR)/clear_vga_memory.elf $(APPDIR)/CLEARVGA.BIN
-	ls -lh $(APPDIR)/CLEARVGA.BIN
-	mcopy -i rootfs.img@@1M $(APPDIR)/CLEARVGA.BIN ::/
-	@echo "CLEARVGA.BIN loaded onto rootfs.img"
+clear_vga_memory: rootfs.img
+	i686-pc-linux-gnu-gcc -m32 -ffreestanding -fno-pic \
+		-fno-stack-protector -fno-asynchronous-unwind-tables \
+		-fno-unwind-tables -nostdlib \
+		-c clear_vga_memory.c -o obj/clear_vga_memory.o
+	i686-pc-linux-gnu-ld -melf_i386 -T app.ld obj/clear_vga_memory.o -o clear_vga_memory.elf
+	i686-pc-linux-gnu-objcopy -O binary clear_vga_memory.elf apps_bin/CLEARVGA.BIN
+	mcopy -i rootfs.img@@1M apps_bin/CLEARVGA.BIN ::/
+	@echo "CLEARVGA.BIN copied into filesystem"
 
 clean:
-	rm -f grub.img kernel rootfs.img obj/* bin/*
+	rm -f grub.img kernel rootfs.img obj/* bin/* apps_bin/*

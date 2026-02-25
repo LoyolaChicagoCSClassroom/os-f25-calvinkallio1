@@ -25,9 +25,9 @@ int map_range(uint32_t va, uint32_t size_bytes) {
 //loads and jumps into a flat binary
 int load_and_exec_flat(char *name) {
 
-    uint32_t load_va = align_up1((uint32_t)&_end_kernel) + 0x20000u;
-    uint32_t stack_va = load_va + 0x40000u;
-    uint32_t stack_size = 0x40000u;
+    uint32_t load_va = 0x00200000u;
+    uint32_t stack_va = 0x00300000u;;
+    uint32_t stack_size = 0x00010000u;
     
     esp_printf(putc, "load_and_exec_flat(%s)\n", name);
     esp_printf(putc, "_end_kernel=0x%x load_va=0x%x stack_va=0x%x stack_size=0x%x\n", (uint32_t)&_end_kernel, load_va, stack_va, stack_size);
