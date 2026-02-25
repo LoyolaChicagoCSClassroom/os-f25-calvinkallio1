@@ -5,12 +5,26 @@ struct ppage physical_page_array[128]; //128 pages, each 2mb in length
 struct ppage *pfa_head;
 struct page_directory_entry pd[1024] __attribute__((aligned(4096)));
 struct page pt[1024] __attribute__((aligned(4096)));
+extern uint8_t _end_kernel;
+
+uint32_t align_up(uint32_t x){
+
+    return (x + 0xFFFu) & ~0xFFFu;
+
+}
 
 void init_pfa_list(void){
 	
 	pfa_head = &physical_page_array[0];
 	pfa_head->prev = 0;
 	pfa_head->next = 0;
+    uint32_t free_phys_start = align_up((uint32_t)&_end_kernel);
+
+    for (int i = 0; i < 128; i++){
+
+        physical_page_array[i].physical_addr = (void*)(free_phys_start + (uint32_t)i * 0x1000u;
+
+    }
 
 	for (int i = 1; i < 128; i++){
 		physical_page_array[i].prev = &physical_page_array[i-1];
@@ -76,7 +90,8 @@ void memset8(void *dst, uint8_t v, uint32_t n) {
 
 void *map_pages(void *vaddr, struct ppage *pglist, struct page_directory_entry *pd){
 	
-	uint32_t va = (uint32_t)vaddr;
+	uint32_t va_start = (uint32_t)vaddr;
+    uint32_t va = va_start;
 	uint32_t pdi = (va >> 22) & 0x3FF; //top 10 bits aka page directory index
 
 	if (pdi != 0) {
@@ -105,15 +120,18 @@ void *map_pages(void *vaddr, struct ppage *pglist, struct page_directory_entry *
 	while (curr) {
 
 		uint32_t pti = (va >> 12) & 0x3FF;
+        if (pti == 0 && va != va_start) return 0;
+
+        uint32_t pa = (uint32_t)curr->physical_addr;
 
 		pt[pti].present = 1;
 		pt[pti].rw = 1;
 		pt[pti].user = 0;
 		pt[pti].accessed = 0;
 		pt[pti].dirty = 0;
-
-		uint32_t pa = (uint32_t)(curr->physical_addr);
 		pt[pti].frame = pa >> 12;
+        
+        asm volatile("invlpg (%0)" : : "r"(va) : "memory");
 
 		va += 0x1000;
 		curr = curr->next;
