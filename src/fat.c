@@ -222,9 +222,9 @@ int fatRead(struct root_directory_entry *rde_ptr, char *buf, int n){
             
             sector_read((unsigned int)(first_sector + i), (char*)sector_buf);
 
-            for (uint32_t j = 0; j < SECTOR_SIZE; j++) {
+            for (uint32_t j = 0; j < SECTOR_SIZE && bytes_read < to_read; j++) {
 
-                buf[bytes_read++] = (char)sector_buf[i];
+                buf[bytes_read++] = (char)sector_buf[j];
 
             }
 
