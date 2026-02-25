@@ -97,8 +97,32 @@ void main(void) {
 
 	esp_printf(putc, "Memory successfully allocated\n");
 
+    esp_printf(putc, "A: Before fatInit\n");
+    fatInit();
+    esp_printf(putc, "B: after fatInit\n");
+
+    esp_printf(putc, "C: before fatOpen\n");
+    struct root_directory_entry *file = fatOpen("TESTFILE.TXT");
+    esp_printf(putc, "D: after fatOpen\n");
+
+    if (!file){
+
+        esp_printf(putc, "E: File not found\n");
+        while(1) {}
+
+    }
+
+    esp_printf(putc, "F: before fatRead\n");
+    char buffer[64];
+    int n = fatRead(file, buffer, 64);
+    esp_printf(putc, "G: After fatRead\n");
+
+    esp_printf(putc, "H: Dumping bytes\n");
+    for (int i = 0; i < n; i++) putc(buffer[i]);
+    putc('\n');
+
 	while (1){
-		
+
 		uint8_t status = inb(0x64);
 		if (status & 0x01) {
 

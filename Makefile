@@ -27,7 +27,10 @@ OBJS = \
 	putc.o \
 	interrupt.o \
 	page.o \
-	rprintf.o
+	rprintf.o \
+	fat.o \
+	page.o \
+	ide.o \
 
 # Make sure to keep a blank line here after OBJS list
 
@@ -39,8 +42,10 @@ $(ODIR)/%.o: $(SDIR)/%.c
 $(ODIR)/%.o: $(SDIR)/%.s
 	$(CC) $(CFLAGS) -c -g -o $@ $^
 
-
 all: bin rootfs.img
+
+$(ODIR)/ide.o: src/ide.asm | obj
+	nasm -f elf32 $< -o $@
 
 bin: obj $(OBJ)
 	$(LD) -melf_i386  obj/* -Tkernel.ld -o kernel
@@ -59,6 +64,7 @@ rootfs.img:
 	mcopy -i rootfs.img@@1M kernel ::/
 	mmd -i rootfs.img@@1M boot
 	mcopy -i rootfs.img@@1M grub.cfg ::/boot
+	mcopy -i rootfs.img@@1M src/testfile.txt ::/
 	@echo " -- BUILD COMPLETED SUCCESSFULLY --"
 
 run: 

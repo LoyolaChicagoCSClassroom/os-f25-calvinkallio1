@@ -33,7 +33,6 @@ uint32_t compare(uint32_t a, uint32_t b){
 void driver_init(char *path_to_file){
 
     (void)path_to_file;
-    fd = 0;
 
 }
 
@@ -73,7 +72,7 @@ int end_of_chain(uint16_t cluster){
 
 int deleted_or_free(struct root_directory_entry *rde) {
 
-    uint8_t first = (uint8_t)e->file_name[0];
+    uint8_t first = (uint8_t)rde->file_name[0];
     return (first == 0x00u) || (first == 0xE5u);
 
 }
@@ -84,7 +83,7 @@ int is_lfn_entry(struct root_directory_entry *rde){
 
 }
 
-void format(chat *path, char out_name[8], char ext[3]){
+void format(char *path, char out_name[8], char ext[3]){
 
     for (int i = 0; i < 8; i++) out_name[i] = ' ';
     for (int i = 0; i < 3; i++) ext[i] = ' ';
@@ -123,9 +122,11 @@ int match(struct root_directory_entry *rde, char name[8], char ext[3]){
 
     for (int i = 0; i < 3; i++){
 
-        if (rde->file_extenstion[i] != ext[i]) return 0;
+        if (rde->file_extension[i] != ext[i]) return 0;
 
     }
+
+    return 1;
 
 }
 
@@ -135,16 +136,16 @@ int fatInit() {
 
     for (int i = 0; i < sizeof(struct boot_sector) && i < SECTOR_SIZE; i++){
 
-        ((uint8_t)&bs)[i] = sector_buf[i];
+        ((uint8_t*)&bs)[i] = sector_buf[i];
 
     }
 
     fat_start_lba = PARTITION_LBA + (uint32_t)bs.num_reserved_sectors;
     root_start_lba = PARTITION_LBA
         + (uint32_t)bs.num_reserved_sectors
-        + (uint32_t)bs.num_fat_tables * (uint32_t)bc.num_sectors_per_fat;
+        + (uint32_t)bs.num_fat_tables * (uint32_t)bs.num_sectors_per_fat;
 
-    root_dir_sectors = compute_root_dir_sectors(bs.num_root_directory_entries, bs.bytes_per_sector);
+    root_dir_sectors = compute_root_dir_sectors(bs.num_root_dir_entries, bs.bytes_per_sector);
     data_start_lba = root_start_lba + root_dir_sectors;
 
     uint32_t max_root_bytes = (uint32_t)MAX_ROOT_ENTRIES * 32u;
@@ -186,7 +187,7 @@ struct root_directory_entry *fatOpen(char *path){
         if ((uint8_t)rde->file_name[0] == 0x00u) break;
 
         if (deleted_or_free(rde)) continue;
-        if (is_lfn_entry(e)) continue;
+        if (is_lfn_entry(rde)) continue;
         
         if (rde->attribute & FILE_ATTRIBUTE_SUBDIRECTORY) continue;
 
@@ -221,7 +222,7 @@ int fatRead(struct root_directory_entry *rde_ptr, char *buf, int n){
             
             sector_read((unsigned int)(first_sector + i), (char*)sector_buf);
 
-            for (uint32_t j = 0; j < SECTOR_SIZE; J++) {
+            for (uint32_t j = 0; j < SECTOR_SIZE; j++) {
 
                 buf[bytes_read++] = (char)sector_buf[i];
 
