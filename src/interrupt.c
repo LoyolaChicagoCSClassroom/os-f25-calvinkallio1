@@ -21,11 +21,46 @@
 
 #include <stdint.h>
 #include "interrupt.h"
+#include "syscall.h"
+#include "putc.h"
 
 struct idt_entry idt_entries[256];
 struct idt_ptr   idt_ptr;
 struct tss_entry tss_ent;
+struct regs_pusha {
 
+    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+
+};
+
+int syscall_dispatch(struct regs_pusha *r) {
+
+    switch (r->eax) {
+
+        case SYS_PUTC:
+            putc((int)(r->ebx & 0xFF));
+            return 0;
+        default:
+            return -1;
+
+    }
+        
+}
+
+__attribute__((naked)) void isr80_stub(void) {
+
+    asm volatile(
+            "pusha \n"
+            "mov %esp, %eax \n"
+            "push %eax \n"
+            "call syscall_dispatch \n"
+            "add $4, %esp \n"
+            "mov %eax, 28(%esp) \n"
+            "popa \n"
+            "iret \n"
+            );
+
+}
 /*
  * outb
  *
@@ -389,14 +424,6 @@ __attribute__((interrupt)) void keyboard_handler(struct interrupt_frame* frame)
     outb(0x20,0x20);
 }
 
-
-__attribute__((interrupt)) void syscall_handler(struct interrupt_frame* frame)
-{
-    asm("cli");
-    /* do something */
-    while(1);
-}
-
 static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
 {
    idt_entries[num].base_lo = base & 0xFFFF;
@@ -443,7 +470,7 @@ void init_idt() {
 //    idt_set_gate(15, (uint32_t)coprocessor_error_handler, 0x08, 0x8e);
 
     idt_set_gate(0x21, (uint32_t)keyboard_handler,0x08, 0x8e);
-    idt_set_gate(0x80, (uint32_t)syscall_handler,0x08, 0xee); // Set flags to EE, making DPL = 3 so it is accessible from userspace
+    idt_set_gate(0x80, (uint32_t)isr80_stub, 0x08, 0xee); // Set flags to EE, making DPL = 3 so it is accessible from userspace
     idt_set_gate(32,   (uint32_t)pit_handler, 0x08, 0x8e);
     idt_flush(&idt_ptr);
 }
@@ -475,6 +502,4 @@ void remap_pic(void)
     /* Initialization finished */
     outb(0x21, 0xfd); // Enable keyboard interrupts
 }
-
-
 

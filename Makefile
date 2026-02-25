@@ -21,6 +21,7 @@ CFLAGS := -ffreestanding -mgeneral-regs-only -mno-mmx -m32 -march=i386 -fno-pie 
 
 ODIR = obj
 SDIR = src
+APPDIR = apps_bin
 
 OBJS = \
 	kernel_main.o \
@@ -30,7 +31,7 @@ OBJS = \
 	fat.o \
 	page.o \
 	ide.o \
-	exec.o \
+	exec.o
 
 # Make sure to keep a blank line here after OBJS list
 
@@ -42,20 +43,23 @@ $(ODIR)/%.o: $(SDIR)/%.c
 $(ODIR)/%.o: $(SDIR)/%.s
 	$(CC) $(CFLAGS) -c -g -o $@ $^
 
-all: bin rootfs.img
+all: rootfs.img
 
 $(ODIR)/ide.o: $(SDIR)/ide.asm | obj
 	nasm -f elf32 $< -o $@
 
-bin: obj $(OBJ)
+kernel: obj $(OBJ)
 	$(LD) -melf_i386  $(OBJ) -Tkernel.ld -o kernel
 	$(SIZE) kernel
 
 obj:
 	mkdir -p obj
 
-rootfs.img:
-	dd if=/dev/zero of=rootfs.img bs=1M count=32
+$(APPDIR):
+	mkdir -p $(APPDIR)
+
+rootfs.img: kernel
+	dd if=/dev/zero of=rootfs.img bs=1M count=128
 	$(GRUBLOC)grub-mkimage -p "(hd0,msdos1)/boot" -o grub.img -O i386-pc normal biosdisk multiboot multiboot2 configfile fat exfat part_msdos
 	dd if=$(BOOTIMG) of=rootfs.img conv=notrunc
 	dd if=grub.img of=rootfs.img conv=notrunc bs=512 seek=1 #########
@@ -73,12 +77,13 @@ run:
 debug:
 	./launch_qemu.sh -monitor stdio
 
-clear_vga_memory: rootfs.img
-	1686-pc-linux-gnu-gcc -m32 -ffreestanding -fno-pie -fno-stack-protector -nostdlib -c clear_vga_memory.c -o clear_vga_memory.o
-	1686-pc-linux-gnu-ld -melf_i386 -Ttext 0x0 clear_vga_memory.o -o clear_vga_memory.elf
-	1686-pc-linux-gnu-objcopy -O binary clear_vga_memory CLEAR_VGA_MEMORY.BIN
-	mcopy -i rootfs.img@@1M CLEAR_VGA_MEMORY.BIN ::/
-	@echo "CLEAR_VGA_MEMORY copied into filesystem"
+clear_vga_memory: rootfs.img | $(APPDIR)
+	$(CC) -m32 -ffreestanding -fno-pie -fno-stack-protector -nostdlib -I. -c clear_vga_memory.c -o clear_vga_memory.o
+	$(LD) -melf_i386 -T app.ld $(APPDIR)/clear_vga_memory.o -o $(APPDIR)/clear_vga_memory.elf
+	$(OBJCOPY) -O binary --strip-all $(APPDIR)/clear_vga_memory.elf $(APPDIR)/CLEARVGA.BIN
+	ls -lh $(APPDIR)/CLEARVGA.BIN
+	mcopy -i rootfs.img@@1M $(APPDIR)/CLEARVGA.BIN ::/
+	@echo "CLEARVGA.BIN loaded onto rootfs.img"
 
 clean:
-	rm -f grub.img kernel rootfs.img obj/*
+	rm -f grub.img kernel rootfs.img obj/* bin/*

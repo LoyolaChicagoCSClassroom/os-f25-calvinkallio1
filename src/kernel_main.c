@@ -138,7 +138,7 @@ void main(void) {
 
     }
 
-    load_and_exec_flat("CLEAR_VGA_MEMORY.BIN");
+    load_and_exec_flat("CLEARVGA.BIN");
 
 	while (1){
 
