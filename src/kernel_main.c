@@ -4,6 +4,7 @@
 #include "page.h"
 #include "rprintf.h"
 #include "fat.h"
+#include "exec.h"
 
 #define MULTIBOOT2_HEADER_MAGIC         0xe85250d6
 
@@ -44,7 +45,7 @@ void main(void) {
 
 	{
 
-		static struct ppage one;
+		struct ppage one;
 		one.next = 0;
 		one.prev = 0;
 		one.physical_addr = (void*)0x000B8000;
@@ -59,7 +60,7 @@ void main(void) {
 
 	for (uint32_t addr = start; addr < end; addr += 0x1000){
 
-		static struct ppage one;
+		struct ppage one;
 		one.next = 0;
 		one.prev = 0;
 		one.physical_addr = (void*)addr;
@@ -77,7 +78,7 @@ void main(void) {
 	uint32_t stack = align_down(esp) - 0x3000;
 	for (uint32_t addr = stack; addr < stack + 0x4000; addr += 0x1000){
 
-		static struct ppage one;
+		struct ppage one;
 		one.next = 0;
 		one.prev = 0;
 		one.physical_addr = (void*)addr;
@@ -120,6 +121,24 @@ void main(void) {
     esp_printf(putc, "H: Dumping bytes\n");
     for (int i = 0; i < n; i++) putc(buffer[i]);
     putc('\n');
+    
+    init_pfa_list();
+    esp_printf(putc, "PFA initialized\n");
+
+    uint32_t load_virtual_address = align_up((uint32_t)&_end_kernel) + 0x20000;
+    uint32_t program_size = 64 * 1024;
+    uint32_t pages = (program_size + 4095) / 4096;
+
+    struct ppage *plist = allocate_physical_pages(pages);
+    if (!plist) { esp_printf(putc, "no free pages\n"); while (1){} }
+    if (!map_pages((void*)load_virtual_address, plist, pd)) {
+
+        esp_printf(putc, "map program region failed\n");
+        while (1) {}
+
+    }
+
+    load_and_exec_flat("CLEAR_VGA_MEMORY.BIN");
 
 	while (1){
 

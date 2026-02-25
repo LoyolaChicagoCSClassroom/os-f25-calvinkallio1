@@ -7,7 +7,7 @@ struct page_directory_entry pd[1024] __attribute__((aligned(4096)));
 struct page pt[1024] __attribute__((aligned(4096)));
 extern uint8_t _end_kernel;
 
-uint32_t align_up(uint32_t x){
+uint32_t align_up_4k(uint32_t x){
 
     return (x + 0xFFFu) & ~0xFFFu;
 
@@ -18,11 +18,11 @@ void init_pfa_list(void){
 	pfa_head = &physical_page_array[0];
 	pfa_head->prev = 0;
 	pfa_head->next = 0;
-    uint32_t free_phys_start = align_up((uint32_t)&_end_kernel);
+    uint32_t free_phys_start = align_up_4k((uint32_t)&_end_kernel);
 
     for (int i = 0; i < 128; i++){
 
-        physical_page_array[i].physical_addr = (void*)(free_phys_start + (uint32_t)i * 0x1000u;
+        physical_page_array[i].physical_addr = (void*)(free_phys_start + (uint32_t)i * 0x1000u);
 
     }
 

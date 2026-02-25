@@ -26,11 +26,11 @@ OBJS = \
 	kernel_main.o \
 	putc.o \
 	interrupt.o \
-	page.o \
 	rprintf.o \
 	fat.o \
 	page.o \
 	ide.o \
+	exec.o \
 
 # Make sure to keep a blank line here after OBJS list
 
@@ -44,11 +44,11 @@ $(ODIR)/%.o: $(SDIR)/%.s
 
 all: bin rootfs.img
 
-$(ODIR)/ide.o: src/ide.asm | obj
+$(ODIR)/ide.o: $(SDIR)/ide.asm | obj
 	nasm -f elf32 $< -o $@
 
 bin: obj $(OBJ)
-	$(LD) -melf_i386  obj/* -Tkernel.ld -o kernel
+	$(LD) -melf_i386  $(OBJ) -Tkernel.ld -o kernel
 	$(SIZE) kernel
 
 obj:
@@ -72,6 +72,13 @@ run:
 
 debug:
 	./launch_qemu.sh -monitor stdio
+
+clear_vga_memory: rootfs.img
+	1686-pc-linux-gnu-gcc -m32 -ffreestanding -fno-pie -fno-stack-protector -nostdlib -c clear_vga_memory.c -o clear_vga_memory.o
+	1686-pc-linux-gnu-ld -melf_i386 -Ttext 0x0 clear_vga_memory.o -o clear_vga_memory.elf
+	1686-pc-linux-gnu-objcopy -O binary clear_vga_memory CLEAR_VGA_MEMORY.BIN
+	mcopy -i rootfs.img@@1M CLEAR_VGA_MEMORY.BIN ::/
+	@echo "CLEAR_VGA_MEMORY copied into filesystem"
 
 clean:
 	rm -f grub.img kernel rootfs.img obj/*
